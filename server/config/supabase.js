@@ -16,6 +16,6 @@ export const supabase = supabaseUrl && supabaseKey
 
 export function assertSupabaseConfigured() {
   if (!supabase) {
-    throw new Error('Supabase is not configured. Copy server/.env.example to server/.env and set SUPABASE_URL and SUPABASE_SERVICE_ROLE_KEY.')
+    throw new Error('Supabase is not configured. Set SUPABASE_URL and SUPABASE_SERVICE_ROLE_KEY in your environment.')
   }
 }

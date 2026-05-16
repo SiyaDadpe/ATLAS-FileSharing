@@ -1,7 +1,9 @@
 import axios from 'axios'
 
-export const apiBaseUrl = import.meta.env.VITE_API_BASE_URL || 'http://localhost:5000/api'
-export const apiOrigin = apiBaseUrl.replace(/\/api\/?$/, '')
+export const apiBaseUrl = import.meta.env.VITE_API_BASE_URL || '/api'
+export const apiOrigin = apiBaseUrl.startsWith('http')
+  ? apiBaseUrl
+  : (typeof window !== 'undefined' ? window.location.origin : 'http://localhost')
 
 const api = axios.create({
   baseURL: apiBaseUrl,
@@ -13,7 +15,7 @@ const api = axios.create({
 export function toBackendUrl(path) {
   if (!path) return ''
   if (path.startsWith('http://') || path.startsWith('https://')) return path
-  return `${apiOrigin}${path}`
+  return new URL(path, apiOrigin).toString()
 }
 
 export function createVault(payload, onUploadProgress) {

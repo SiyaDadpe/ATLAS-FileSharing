@@ -1,3 +1,5 @@
+import { HttpError } from './httpError.js'
+
 const durationMap = {
   '10m': 10 * 60 * 1000,
   '1h': 60 * 60 * 1000,
@@ -14,7 +16,7 @@ export function calculateExpiry(expiryType, customDurationValue, customDurationU
   if (expiryType === 'custom') {
     const value = Number(customDurationValue)
     if (!Number.isFinite(value) || value <= 0) {
-      throw new Error('Custom duration must be greater than 0')
+      throw new HttpError(400, 'Custom duration must be greater than 0')
     }
 
     const unitMap = {
@@ -25,7 +27,7 @@ export function calculateExpiry(expiryType, customDurationValue, customDurationU
 
     const unit = unitMap[customDurationUnit]
     if (!unit) {
-      throw new Error('Invalid custom duration unit')
+      throw new HttpError(400, 'Invalid custom duration unit')
     }
 
     return new Date(Date.now() + value * unit)
@@ -33,7 +35,7 @@ export function calculateExpiry(expiryType, customDurationValue, customDurationU
 
   const duration = durationMap[expiryType]
   if (!duration) {
-    throw new Error('Invalid expiry duration')
+    throw new HttpError(400, 'Invalid expiry duration')
   }
 
   return new Date(Date.now() + duration)

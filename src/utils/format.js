@@ -15,13 +15,13 @@ export function formatDateTime(value) {
 }
 
 export function buildVaultUrl(code) {
-  return `${window.location.origin}/vault/${code}`
+  return `${window.location.origin}/s/${code}`
 }
 
 export function extractCode(value) {
   if (!value) return ''
   const trimmed = value.trim()
-  const urlMatch = trimmed.match(/\/vault\/([A-Z0-9]{5})(?:\/?|$)/i)
+  const urlMatch = trimmed.match(/\/(?:s|vault)\/([A-Z0-9]{5})(?:\/?|$)/i)
   if (urlMatch) return urlMatch[1].toUpperCase()
 
   const codeMatch = trimmed.match(/([A-Z0-9]{5})(?:\/?|$)/i)

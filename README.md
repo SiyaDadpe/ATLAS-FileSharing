@@ -5,9 +5,9 @@ TempVault is a lightweight full-stack temporary anonymous vault app.
 ## Stack
 
 - Frontend: React + Vite + TailwindCSS + React Router + Axios
-- Backend: Node.js + Express.js + Multer
+- API: Vercel Serverless Functions
 - Database and storage: Supabase PostgreSQL + Supabase Storage
-- Deployment: Vercel frontend, Render backend
+- Deployment: Vercel only
 
 ## Features
 
@@ -30,17 +30,13 @@ npm install
 npm run dev
 ```
 
-Copy `.env.example` to `.env` and set `VITE_API_BASE_URL`.
+Set `VITE_API_BASE_URL` only if you want to override the default `/api` base.
+By default the app uses `/api` on the same origin.
+For full local testing, use the Vercel CLI or point `VITE_API_BASE_URL` at a deployed Vercel URL.
 
-### 2) Backend
+### 2) API
 
-```bash
-cd server
-npm install
-npm run dev
-```
-
-Copy `server/.env.example` to `server/.env` and fill in Supabase values.
+The API now runs from Vercel serverless functions in the repo root. No separate backend deploy is needed.
 
 ## Supabase setup
 
@@ -48,32 +44,33 @@ Copy `server/.env.example` to `server/.env` and fill in Supabase values.
 2. Run the SQL in `supabase/schema.sql`.
 3. Create a Storage bucket named `tempvault`.
 4. Make the bucket public for simple file delivery, or adapt the backend to signed URLs if you prefer private storage.
-5. Copy the project URL and service role key into `server/.env`.
+5. Copy the project URL and service role key into your Vercel environment variables.
 
 ## API endpoints
 
 - `POST /api/vault/create`
 - `POST /api/vault/unlock`
+- `POST /api/vault/consume`
 - `GET /api/vault/:code`
+- `GET /api/vault/download/:code/:fileId`
 
 ## Deployment
 
 ### Vercel
 
-1. Push the frontend root to GitHub.
+1. Push the repository to GitHub.
 2. Import the repository in Vercel.
-3. Set `VITE_API_BASE_URL` to your Render backend URL.
+3. Set these environment variables:
+	- `SUPABASE_URL`
+	- `SUPABASE_SERVICE_ROLE_KEY`
+	- `SUPABASE_STORAGE_BUCKET` if you use a custom bucket name
+	- `VITE_API_BASE_URL` optional, defaults to `/api`
 4. Deploy.
 
-### Render
-
-1. Create a new Web Service from the `server` folder.
-2. Set the build command to `npm install`.
-3. Set the start command to `npm start`.
-4. Add the environment variables from `server/.env.example`.
-5. Set `CLIENT_ORIGIN` to the Vercel frontend URL.
+The Vercel deployment hosts the React app and the API together.
 
 ## Notes
 
 - Expired vaults are removed lazily during retrieval.
-- The app is designed for around 10–50 concurrent users, keeping the architecture simple.
+- Supabase is still the database and storage layer; Vercel only hosts the UI and API code.
+- File upload size is still limited by Vercel serverless function limits.
