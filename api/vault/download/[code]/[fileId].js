@@ -18,9 +18,15 @@ export default async function handler(req, res) {
       return
     }
 
-    const { data, error } = await supabase.storage
-      .from(storageBucket)
-      .createSignedUrl(file.storage_path, 60)
+    const bucket = supabase.storage.from(storageBucket)
+    const publicResult = bucket.getPublicUrl(file.storage_path)
+
+    if (publicResult?.data?.publicUrl) {
+      res.redirect(302, publicResult.data.publicUrl)
+      return
+    }
+
+    const { data, error } = await bucket.createSignedUrl(file.storage_path, 60)
 
     if (error || !data?.signedUrl) {
       throw error || new Error('Unable to create download link')
