@@ -1,9 +1,6 @@
-import { getVaultFileByCodeAndId } from '../../../../_lib/vault.js'
+import { getVaultByCode } from '../../../../_lib/vault.js'
 import { allowMethods, handleApiError } from '../../../../_lib/http.js'
-
-function safeFileName(fileName = 'file') {
-  return String(fileName).replace(/"/g, "'")
-}
+import { supabase, storageBucket } from '../../../../../server/config/supabase.js'
 
 export default async function handler(req, res) {
   if (req.method !== 'GET') {
@@ -13,19 +10,23 @@ export default async function handler(req, res) {
 
   try {
     const { code, fileId } = req.query
-    const { file, data } = await getVaultFileByCodeAndId(String(code).toUpperCase(), fileId)
+    const record = await getVaultByCode(String(code).toUpperCase())
+    const file = (record.files || []).find((item) => item.id === fileId)
 
-    const buffer = Buffer.from(await data.arrayBuffer())
-    const shouldDownload = req.query.download === '1' || req.query.download === 'true'
+    if (!file) {
+      res.status(404).json({ success: false, message: 'File not found' })
+      return
+    }
 
-    res.setHeader('Content-Type', file.mime_type || 'application/octet-stream')
-    res.setHeader('Content-Length', buffer.length)
-    res.setHeader('Cache-Control', 'no-store')
-    res.setHeader(
-      'Content-Disposition',
-      `${shouldDownload ? 'attachment' : 'inline'}; filename="${safeFileName(file.file_name)}"`,
-    )
-    res.status(200).send(buffer)
+    const { data, error } = await supabase.storage
+      .from(storageBucket)
+      .createSignedUrl(file.storage_path, 60)
+
+    if (error || !data?.signedUrl) {
+      throw error || new Error('Unable to create download link')
+    }
+
+    res.redirect(302, data.signedUrl)
   } catch (error) {
     handleApiError(res, error)
   }
