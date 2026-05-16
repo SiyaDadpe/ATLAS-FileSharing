@@ -6,6 +6,7 @@ import {
   markVaultViewed,
   getVaultFileByCodeAndId,
 } from '../../server/services/vaultService.js'
+import { supabase, storageBucket } from '../../server/config/supabase.js'
 
 export {
   createVaultService as createVault,
@@ -20,12 +21,27 @@ export function buildDownloadUrl(code, fileId) {
   return `/api/vault/download/${code}/${fileId}`
 }
 
-export function mapVaultResponse(record) {
+async function getAccessibleFileUrl(file) {
+  if (!file?.storage_path) return file?.file_url || ''
+
+  const bucket = supabase?.storage?.from(storageBucket)
+  if (!bucket) return file.file_url || ''
+
+  const publicResult = bucket.getPublicUrl(file.storage_path)
+  if (publicResult?.data?.publicUrl) {
+    return publicResult.data.publicUrl
+  }
+
+  const { data } = await bucket.createSignedUrl(file.storage_path, 60 * 60)
+  return data?.signedUrl || file.file_url || ''
+}
+
+export async function mapVaultResponse(record) {
   const code = record.vault.retrieval_code
-  const files = (record.files || []).map((file) => ({
+  const files = await Promise.all((record.files || []).map(async (file) => ({
     ...file,
-    file_url: file.file_url || buildDownloadUrl(code, file.id),
-  }))
+    file_url: await getAccessibleFileUrl(file) || buildDownloadUrl(code, file.id),
+  })))
 
   return {
     code,

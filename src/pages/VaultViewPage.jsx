@@ -30,6 +30,7 @@ export default function VaultViewPage() {
   const [passphrase, setPassphrase] = useState('')
   const [showPassphrase, setShowPassphrase] = useState(false)
   const [error, setError] = useState('')
+  const [downloadingId, setDownloadingId] = useState(null)
 
   const shareUrl = useMemo(() => (vault ? buildVaultUrl(vault.code) : ''), [vault])
 
@@ -112,6 +113,31 @@ export default function VaultViewPage() {
       toast.error(err?.response?.data?.message || 'Unable to delete vault')
     } finally {
       setConsuming(false)
+    }
+  }
+
+  async function handleDownload(file) {
+    if (!file?.file_url) return
+    setDownloadingId(file.id)
+    try {
+      const response = await fetch(toBackendUrl(file.file_url), { credentials: 'omit' })
+      if (!response.ok) {
+        throw new Error('Download failed')
+      }
+
+      const blob = await response.blob()
+      const objectUrl = URL.createObjectURL(blob)
+      const anchor = document.createElement('a')
+      anchor.href = objectUrl
+      anchor.download = file.file_name || 'download'
+      document.body.appendChild(anchor)
+      anchor.click()
+      anchor.remove()
+      URL.revokeObjectURL(objectUrl)
+    } catch (err) {
+      toast.error('Unable to download file')
+    } finally {
+      setDownloadingId(null)
     }
   }
 
@@ -251,12 +277,16 @@ export default function VaultViewPage() {
                       </div>
                     </div>
                     <div className="flex flex-wrap gap-2">
-                      <a href={`${toBackendUrl(file.file_url)}?download=1`} target="_blank" rel="noreferrer">
-                        <Button variant="secondary" className="text-xs">
-                          <Download className="h-4 w-4" />
-                          Download
-                        </Button>
-                      </a>
+                      <Button
+                        type="button"
+                        variant="secondary"
+                        className="text-xs"
+                        onClick={() => handleDownload(file)}
+                        disabled={downloadingId === file.id}
+                      >
+                        <Download className="h-4 w-4" />
+                        {downloadingId === file.id ? 'Downloading...' : 'Download'}
+                      </Button>
                     </div>
                   </div>
                 </div>

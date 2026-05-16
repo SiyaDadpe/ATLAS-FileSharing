@@ -15,7 +15,7 @@ export default async function handler(req, res) {
       await markVaultViewed(record.vault)
       sendJson(res, 200, {
         success: true,
-        data: mapVaultResponse(record),
+        data: await mapVaultResponse(record),
       })
       return
     }

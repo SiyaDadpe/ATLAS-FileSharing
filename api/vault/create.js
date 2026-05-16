@@ -38,7 +38,7 @@ export default async function handler(req, res) {
     sendJson(res, 201, {
       success: true,
       message: 'Vault created successfully',
-      data: mapVaultResponse(result),
+      data: await mapVaultResponse(result),
     })
   } catch (error) {
     handleApiError(res, error)

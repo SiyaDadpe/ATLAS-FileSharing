@@ -20,7 +20,7 @@ export default async function handler(req, res) {
     sendJson(res, 200, {
       success: true,
       message: 'Vault unlocked',
-      data: mapVaultResponse(record),
+      data: await mapVaultResponse(record),
     })
   } catch (error) {
     handleApiError(res, error)
